@@ -21,7 +21,8 @@ import (
 	"github.com/rancher/k3s/pkg/datadir"
 	"github.com/rancher/k3s/pkg/deploy"
 	"github.com/rancher/k3s/pkg/node"
-	"github.com/rancher/k3s/pkg/rootlessports"
+
+	// "github.com/rancher/k3s/pkg/rootlessports"
 	"github.com/rancher/k3s/pkg/servicelb"
 	"github.com/rancher/k3s/pkg/static"
 	v1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
@@ -152,7 +153,7 @@ func masterControllers(ctx context.Context, sc *Context, config *Config) error {
 	}
 
 	if !config.DisableServiceLB && config.Rootless {
-		return rootlessports.Register(ctx, sc.Core.Core().V1().Service(), config.ControlConfig.HTTPSPort)
+		// return rootlessports.Register(ctx, sc.Core.Core().V1().Service(), config.ControlConfig.HTTPSPort)
 	}
 
 	return nil
@@ -263,12 +264,12 @@ func writeKubeConfig(certs string, config *Config) error {
 	if config.ControlConfig.KubeConfigMode != "" {
 		mode, err := strconv.ParseInt(config.ControlConfig.KubeConfigMode, 8, 0)
 		if err == nil {
-			os.Chmod(kubeConfig, os.FileMode(mode))
+			// os.Chmod(kubeConfig, os.FileMode(mode))
 		} else {
 			logrus.Errorf("failed to set %s to mode %s: %v", kubeConfig, os.FileMode(mode), err)
 		}
 	} else {
-		os.Chmod(kubeConfig, os.FileMode(0600))
+		// os.Chmod(kubeConfig, os.FileMode(0600))
 	}
 
 	if kubeConfigSymlink != kubeConfig {

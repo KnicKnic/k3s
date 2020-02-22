@@ -141,9 +141,9 @@ func writePasswords(passwdFile string, records [][]string) error {
 		}
 		defer out.Close()
 
-		if err := out.Chmod(0600); err != nil {
-			return err
-		}
+		// if err := out.Chmod(0600); err != nil {
+		// 	return err
+		// }
 
 		return csv.NewWriter(out).WriteAll(records)
 	}()

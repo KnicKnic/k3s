@@ -13,18 +13,22 @@ import (
 
 	systemd "github.com/coreos/go-systemd/daemon"
 	"github.com/rancher/k3s/pkg/agent/config"
-	"github.com/rancher/k3s/pkg/agent/containerd"
+	"github.com/rancher/k3s/pkg/nodeconfig"
+
+	// "github.com/rancher/k3s/pkg/agent/containerd"
 	"github.com/rancher/k3s/pkg/agent/flannel"
 	"github.com/rancher/k3s/pkg/agent/loadbalancer"
-	"github.com/rancher/k3s/pkg/agent/netpol"
-	"github.com/rancher/k3s/pkg/agent/syssetup"
+
+	// "github.com/rancher/k3s/pkg/agent/netpol"
+
+	// "github.com/rancher/k3s/pkg/agent/syssetup"
 	"github.com/rancher/k3s/pkg/agent/tunnel"
 	"github.com/rancher/k3s/pkg/cli/cmds"
 	"github.com/rancher/k3s/pkg/clientaccess"
 	"github.com/rancher/k3s/pkg/daemons/agent"
 	daemonconfig "github.com/rancher/k3s/pkg/daemons/config"
-	"github.com/rancher/k3s/pkg/nodeconfig"
-	"github.com/rancher/k3s/pkg/rootless"
+
+	// "github.com/rancher/k3s/pkg/rootless"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,9 +53,9 @@ func run(ctx context.Context, cfg cmds.Agent, lb *loadbalancer.LoadBalancer) err
 	}
 
 	if !nodeConfig.Docker && nodeConfig.ContainerRuntimeEndpoint == "" {
-		if err := containerd.Run(ctx, nodeConfig); err != nil {
-			return err
-		}
+		// if err := containerd.Run(ctx, nodeConfig); err != nil {
+		// 	return err
+		// }
 	}
 
 	if err := tunnel.Setup(ctx, nodeConfig, lb.Update); err != nil {
@@ -76,11 +80,11 @@ func run(ctx context.Context, cfg cmds.Agent, lb *loadbalancer.LoadBalancer) err
 		return err
 	}
 
-	if !nodeConfig.AgentConfig.DisableNPC {
-		if err := netpol.Run(ctx, nodeConfig); err != nil {
-			return err
-		}
-	}
+	// if !nodeConfig.AgentConfig.DisableNPC {
+	// 	if err := netpol.Run(ctx, nodeConfig); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	<-ctx.Done()
 	return ctx.Err()
@@ -99,13 +103,13 @@ func Run(ctx context.Context, cfg cmds.Agent) error {
 	if err := validate(); err != nil {
 		return err
 	}
-	syssetup.Configure()
+	//syssetup.Configure()
 
-	if cfg.Rootless && !cfg.RootlessAlreadyUnshared {
+	/*if cfg.Rootless && !cfg.RootlessAlreadyUnshared {
 		if err := rootless.Rootless(cfg.DataDir); err != nil {
 			return err
 		}
-	}
+	}*/
 
 	cfg.DataDir = filepath.Join(cfg.DataDir, "agent")
 	os.MkdirAll(cfg.DataDir, 0700)
