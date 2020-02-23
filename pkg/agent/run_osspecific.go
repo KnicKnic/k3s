@@ -4,9 +4,9 @@ package agent
 
 import (
 	"errors"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"strings"
-	"github.com/sirupsen/logrus"
 )
 
 func validate() error {
@@ -27,4 +27,3 @@ func validate() error {
 
 	return nil
 }
-

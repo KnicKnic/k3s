@@ -1,8 +1,5 @@
 package agent
 
-import (
-)
-
-func validate() error{
+func validate() error {
 	return nil
 }
