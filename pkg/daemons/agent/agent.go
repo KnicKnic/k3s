@@ -37,22 +37,6 @@ func Agent(config *config.Agent) error {
 	return nil
 }
 
-func startKubeProxy(cfg *config.Agent) error {
-	argsMap := map[string]string{
-		"proxy-mode":           "iptables",
-		"healthz-bind-address": "127.0.0.1",
-		"kubeconfig":           cfg.KubeConfigKubeProxy,
-		"cluster-cidr":         cfg.ClusterCIDR.String(),
-	}
-	if cfg.NodeName != "" {
-		argsMap["hostname-override"] = cfg.NodeName
-	}
-
-	args := config.GetArgsList(argsMap, cfg.ExtraKubeProxyArgs)
-	logrus.Infof("Running kube-proxy %s", config.ArgString(args))
-	return executor.KubeProxy(args)
-}
-
 func startKubelet(cfg *config.Agent) error {
 	argsMap := map[string]string{
 		"healthz-bind-address":     "127.0.0.1",
