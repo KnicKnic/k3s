@@ -21,7 +21,9 @@ $BaseDir = "c:\k"
 
 
 
-
+echo """
+nameserver 8.8.8.8
+""" > /etc/resolv.conf
 
 del C:\tmp\k3s\ -Recurse -Force
 $env:KUBECONFIG="C:\tmp\k3s\server\cred\admin.kubeconfig"
@@ -44,6 +46,20 @@ $env:KUBE_NETWORK="vxlan0"
 
 
 .\k3s.exe server -d c:\tmp\k3s --docker --disable-network-policy  --flannel-conf C:\tmp\k3s\agent\etc\flannel\net-conf.json --resolv-conf C:\Users\Administrator\go\src\github.com\rancher\k3s\k3s-resolv.conf --pause-image mcr.microsoft.com/k8s/core/pause:1.0.0
+
+--resolv-conf C:\Users\Administrator\go\src\github.com\rancher\k3s\k3s-resolv.conf 
+
+$env:KUBE_NETWORK="cbr0"
+.\k3s.exe server -d c:\tmp\k3s  --flannel-backend host-gw --docker --disable-network-policy --pause-image mcr.microsoft.com/k8s/core/pause:1.0.0 --disable servicelb,traefik,local-storage,metrics-server 
+
+--disable coredns 
+
+--kube-proxy-arg "source-vip=10.42.0.0"
+
+
+del C:\tmp\k3s\ -Recurse -Force
+$env:KUBE_NETWORK="cbr0"
+.\k3s.exe server -d c:\tmp\k3s  --flannel-backend host-gw --docker --disable-network-policy --pause-image mcr.microsoft.com/k8s/core/pause:1.0.0 
 
 
 function Get-VmComputeNativeMethods()
