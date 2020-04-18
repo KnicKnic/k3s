@@ -32,22 +32,22 @@ import (
 
 func startKubeProxy(cfg *config.Agent) {
 
-
 	kubeNetwork := os.Getenv("KUBE_NETWORK")
 
 	// configPath := saveKubeProxyConfig(cfg.NodeConfigPath)
 
-// TODO: need to grab sourceVip and update cidr & overswrite with .0
-// example assumes 10.42.0.0/16
+	// TODO: need to grab sourceVip and update cidr & overswrite with .0
+	// example assumes 10.42.0.0/16
 	argsMap := map[string]string{
 		"proxy-mode":           "kernelspace",
 		"healthz-bind-address": "127.0.0.1",
 		"kubeconfig":           cfg.KubeConfigKubeProxy,
 		"cluster-cidr":         cfg.ClusterCIDR.String(),
+		// "cluster-cidr": "10.43.0.0/16",
 		// "config":               configPath,
 	}
 
-	if kubeNetwork == "" || kubeNetwork == "vxlan0"{
+	if kubeNetwork == "" || kubeNetwork == "vxlan0" {
 		argsMap["network-name"] = "vxlan0"
 		argsMap["feature-gates"] = "WinOverlay=true"
 		// argsMap["source-vip"] = "10.42.0.8"
@@ -64,6 +64,6 @@ func startKubeProxy(cfg *config.Agent) {
 
 	go func() {
 		logrus.Infof("Running kube-proxy %s", config.ArgString(args))
-		logrus.Fatalf("kube-proxy exited: %v", command.Execute())	
+		logrus.Fatalf("kube-proxy exited: %v", command.Execute())
 	}()
 }

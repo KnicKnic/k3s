@@ -2,10 +2,12 @@ package flannel
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/sirupsen/logrus"
+
 	"github.com/rancher/k3s/pkg/agent/util"
 )
 
@@ -516,7 +518,7 @@ Export-ModuleMember -Function Invoke-HNSRequest
 `
 )
 
-func saveHnsScript(scriptDirectory string) string{
+func saveHnsScript(scriptDirectory string) string {
 	p := filepath.Join(scriptDirectory, "hns.psm1")
 	util.WriteFile(p, hns)
 	return p
@@ -524,25 +526,26 @@ func saveHnsScript(scriptDirectory string) string{
 
 func setupOverlay(scriptDirectory string, interfaceName string) {
 	hnsLocation := saveHnsScript(scriptDirectory)
-	run("ipmo  "+ hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30"`+
-		`-Gateway "192.168.255.1" -Name "External" -AdapterName "%s" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; })`,
+	run("ipmo  " + hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30"`+
+		` -Gateway "192.168.255.1" -Name "External" -AdapterName "%s" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; })`,
 		interfaceName),
 	)
 }
 
 func setupL2bridge(scriptDirectory string, interfaceName string) {
 	hnsLocation := saveHnsScript(scriptDirectory)
-	run("ipmo  "+ hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30"`+
-		`-Gateway "192.168.255.1" -Name "External" -AdapterName "%s"`,
+	run("ipmo  " + hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type l2bridge -AddressPrefix "192.168.255.0/30"`+
+		` -Gateway "192.168.255.1" -Name "External" -AdapterName "%s"`,
 		interfaceName),
 	)
 }
 
 func run(command string) {
+	logrus.Info(command)
 	cmd := exec.Command("powershell", "-Command", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("Error running command: %v", err)
+		logrus.Fatalf("Error running command: %v", err)
 	}
 }

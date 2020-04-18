@@ -46,46 +46,46 @@ const (
   }
 `
 
-	// 	cniConf_hostgw = `
-	// {
-	// 	"name": "cbr0",
-	// 	"cniVersion": "0.3.0",
-	// 	"type": "flannel",
-	// 	"capabilities": {
-	// 	  "dns": true
-	// 	},
-	// 	"delegate": {
-	// 	  "type": "win-bridge",
-	// 	  "hairpinMode": true,
-	// 	  "isDefaultGateway": true,
-	// 	  "policies": [
-	// 		{
-	// 		  "Name": "EndpointPolicy",
-	// 		  "Value": {
-	// 			"Type": "OutBoundNAT",
-	// 			"ExceptionList": ["%SERVICECIDR%","%CLUSTERCIDR%","%HOSTCIDR%"]
-	// 		  }
-	// 		},
-	// 		{
-	// 		  "Name": "EndpointPolicy",
-	// 		  "Value": {
-	// 			"Type": "ROUTE",
-	// 			"DestinationPrefix": "%SERVICECIDR%",
-	// 			"NeedEncap": true
-	// 		  }
-	// 		},
-	// 		{
-	// 		  "Name": "EndpointPolicy",
-	// 		  "Value": {
-	// 			"Type": "ROUTE",
-	// 			"DestinationPrefix": "%HOSTIPCIDR%",
-	// 			"NeedEncap": true
-	// 		  }
-	// 		}
-	// 	  ]
-	// 	}
-	//   }
-	// `
+	cniConf_hostgw = `
+	{
+		"name": "cbr0",
+		"cniVersion": "0.3.0",
+		"type": "flannel",
+		"capabilities": {
+		  "dns": true
+		},
+		"delegate": {
+		  "type": "win-bridge",
+		  "hairpinMode": true,
+		  "isDefaultGateway": true,
+		  "policies": [
+			{
+			  "Name": "EndpointPolicy",
+			  "Value": {
+				"Type": "OutBoundNAT",
+				"ExceptionList": ["%SERVICECIDR%","%CLUSTERCIDR%","%HOSTCIDR%"]
+			  }
+			},
+			{
+			  "Name": "EndpointPolicy",
+			  "Value": {
+				"Type": "ROUTE",
+				"DestinationPrefix": "%SERVICECIDR%",
+				"NeedEncap": true
+			  }
+			},
+			{
+			  "Name": "EndpointPolicy",
+			  "Value": {
+				"Type": "ROUTE",
+				"DestinationPrefix": "%HOSTIPCIDR%",
+				"NeedEncap": true
+			  }
+			}
+		  ]
+		}
+	  }
+	`
 
 	flannelConf = `{
 	"Network": "%CIDR%",
@@ -98,12 +98,10 @@ const (
 	"Type": "vxlan"
 }`
 
-// 	hostGWBackend = `{
-// 	"Name": "cbr0",
-// 	"Type": "host-gw"
-// }`
-// )
-
+	hostGWBackend = `{
+	"Name": "cbr0",
+	"Type": "host-gw"
+}`
 )
 
 func Prepare(ctx context.Context, nodeConfig *config.Node) error {
@@ -118,8 +116,8 @@ func Prepare(ctx context.Context, nodeConfig *config.Node) error {
 	switch nodeConfig.FlannelBackend {
 	case config.FlannelBackendVXLAN:
 		setupOverlay(nodeConfig.AgentConfig.NodeConfigPath, flannelIface)
-	// case config.FlannelBackendHostGW:
-	// setupL2bridge(flannelIface)
+	case config.FlannelBackendHostGW:
+		setupL2bridge(nodeConfig.AgentConfig.NodeConfigPath, flannelIface)
 	default:
 		return fmt.Errorf("Cannot configure unknown flannel backend '%s'", nodeConfig.FlannelBackend)
 	}
@@ -163,9 +161,21 @@ func createCNIConf(nodeConfig *config.Node) error {
 		return nil
 	}
 	p := filepath.Join(nodeConfig.AgentConfig.CNIConfDir, "10-flannel.conf")
-	confJSON := strings.Replace(cniConf_vxlan, "%CLUSTERCIDR%", nodeConfig.AgentConfig.ClusterCIDR.String(), -1)
+	cniConf := ""
+	switch nodeConfig.FlannelBackend {
+	case config.FlannelBackendVXLAN:
+		cniConf = cniConf_vxlan
+	case config.FlannelBackendHostGW:
+		cniConf = cniConf_hostgw
+	default:
+		return fmt.Errorf("Cannot configure unknown flannel backend '%s'", nodeConfig.FlannelBackend)
+	}
+	confJSON := strings.Replace(cniConf, "%CLUSTERCIDR%", nodeConfig.AgentConfig.ClusterCIDR.String(), -1)
 	// TODO: figure out how to fetch service cidr
 	confJSON = strings.Replace(confJSON, "%SERVICECIDR%", "10.43.0.0/16", -1)
+	confJSON = strings.Replace(confJSON, "%HOSTCIDR%", "10.231.120.177/24", -1)
+	confJSON = strings.Replace(confJSON, "%HOSTIPCIDR%", "10.231.120.177/32", -1)
+
 	return util.WriteFile(p, confJSON)
 }
 
@@ -184,8 +194,8 @@ func createFlannelConf(nodeConfig *config.Node) error {
 	switch nodeConfig.FlannelBackend {
 	case config.FlannelBackendVXLAN:
 		backendConf = vxlanBackend
-	// case config.FlannelBackendHostGW:
-	// 	backendConf = hostGWBackend
+	case config.FlannelBackendHostGW:
+		backendConf = hostGWBackend
 	default:
 		return fmt.Errorf("Cannot configure unknown flannel backend '%s'", nodeConfig.FlannelBackend)
 	}
