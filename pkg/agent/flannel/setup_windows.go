@@ -173,8 +173,8 @@ func createCNIConf(nodeConfig *config.Node) error {
 	confJSON := strings.Replace(cniConf, "%CLUSTERCIDR%", nodeConfig.AgentConfig.ClusterCIDR.String(), -1)
 	// TODO: figure out how to fetch service cidr
 	confJSON = strings.Replace(confJSON, "%SERVICECIDR%", "10.43.0.0/16", -1)
-	confJSON = strings.Replace(confJSON, "%HOSTCIDR%", "10.231.120.177/24", -1)
-	confJSON = strings.Replace(confJSON, "%HOSTIPCIDR%", "10.231.120.177/32", -1)
+	confJSON = strings.Replace(confJSON, "%HOSTCIDR%", "10.231.121.162/23", -1)
+	confJSON = strings.Replace(confJSON, "%HOSTIPCIDR%", "10.231.121.162/32", -1)
 
 	return util.WriteFile(p, confJSON)
 }

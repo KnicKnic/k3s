@@ -10,8 +10,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "env": {"KUBE_NETWORK":"cbr0", "PATH": "C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program Files\\Docker;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Go\\bin;C:\\Users\\Administrator\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Administrator\\go\\bin;C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin;C:\\Users\\Administrator\\go\\src\\github.com\\rancher\\k3s"},
-            "args": ["server", "-d", "c:\\tmp\\k3s", "", "--flannel-backend", "host-gw", "--docker", "--disable-network-policy", "--pause-image", "mcr.microsoft.com/k8s/core/pause:1.0.0", "--disable", "servicelb,traefik,local-storage,metrics-server"]
+            "env": {"KUBE_NETWORK":"cbr0"},
+            "args": ["agent","--token","K10f4b480d54c4a3f920f31e92ff34ecd488f8d8ddcf3a065591f8f67737fa59cd3::server:2019b67756d98e8a98fc79ca35b615db","--server","https://10.231.120.177:6443", "-d", "c:\\tmp\\k3s", "", "--flannel-backend", "host-gw", "--docker", "--disable-network-policy", "--pause-image", "mcr.microsoft.com/k8s/core/pause:1.0.0"]
         }
     ]
 }

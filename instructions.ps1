@@ -1,6 +1,7 @@
  $env:Path +=";C:\Users\Administrator\go\src\github.com\rancher\k3s"
 .\k3s.exe server -d c:\tmp\k3s --flannel-backend none --docker  --kube-proxy-arg "proxy-mode=userspace" --disable-network-policy
 
+Get-HnsNetwork  |?{$_.Name -eq "External"} |Remove-HnsNetwork
 del C:\tmp\k3s\ -Recurse -Force
 
 
