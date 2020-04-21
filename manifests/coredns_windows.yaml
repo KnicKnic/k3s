@@ -98,6 +98,11 @@ spec:
       tolerations:
         - key: "CriticalAddonsOnly"
           operator: "Exists"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+      nodeSelector:
+        beta.kubernetes.io/os: windows
       containers:
       - name: coredns
         image: knicknic/coredns:win
