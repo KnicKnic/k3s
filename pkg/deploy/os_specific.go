@@ -2,10 +2,14 @@
 
 package deploy
 
+import (
+	"strings"
+)
+
 func convertOsFileName(fileName string) string {
-	return fileName
+	return strings.ReplaceAll(fileName, "_linux", "")
 }
 
-func osSpecificSkipFiles() map[string]bool {
-	return map[string]bool{"coredns_windows.yaml": true}
+func skipOsFileName(fileName string) bool {
+	return strings.Contains(fileName, "_windows")
 }
