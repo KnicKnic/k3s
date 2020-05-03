@@ -11,6 +11,9 @@ import (
 
 func Stage(dataDir string) error {
 	for _, name := range AssetNames() {
+		if skipFileForOs(name) {
+			continue
+		}
 		content, err := Asset(name)
 		if err != nil {
 			return err

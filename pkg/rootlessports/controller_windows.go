@@ -2,7 +2,6 @@ package rootlessports
 
 import (
 	"context"
-
 	coreClients "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
 )
 
