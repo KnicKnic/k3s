@@ -14,7 +14,7 @@ import (
 func Stage(dataDir string, templateVars map[string]string, skips map[string]bool) error {
 staging:
 	for _, osSpecificName := range AssetNames() {
-		if skipOsFileName(name) {
+		if skipOsFileName(osSpecificName) {
 			continue staging
 		}
 		name := convertOsFileName(osSpecificName)

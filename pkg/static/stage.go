@@ -12,7 +12,7 @@ import (
 func Stage(dataDir string) error {
 	for _, osSpecificName := range AssetNames() {
 		if skipOsFileName(osSpecificName) {
-			continue staging
+			continue
 		}
 		content, err := Asset(osSpecificName)
 		if err != nil {
