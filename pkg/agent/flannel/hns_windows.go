@@ -1,7 +1,9 @@
 package flannel
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +15,7 @@ import (
 
 const (
 	// this code comes from https://github.com/kubernetes-sigs/sig-windows-tools/blob/master/kubeadm/flannel/hns.psm1
+	// also contains GetSourceVip (modified) from https://github.com/microsoft/SDN/blob/d56fe83dfa167bfd5cdff1666bb5d2275662dec4/Kubernetes/windows/helper.psm1
 	hns string = `
 #########################################################################
 # Global Initialize
@@ -492,8 +495,54 @@ function Invoke-HNSRequest
     return $output;
 }
 
-#########################################################################
 
+function Get-HNSSourceVip($nodeDir, $hostLocalDir, $NetworkName)
+{
+    $hnsNetwork = Get-HnsNetwork | ? Name -EQ $NetworkName.ToLower()
+
+    # example subnet 10.42.0.0/24
+    $subnet = $hnsNetwork.Subnets[0].AddressPrefix
+
+    $ipamConfig = @"
+        {"cniVersion": "0.2.0", "name": "$NetworkName", "ipam":{"type":"host-local","ranges":[[{"subnet":"$subnet"}]],"dataDir":"/var/lib/cni/networks"}}
+"@
+
+    $ipamConfig | Out-File "$nodeDir\sourceVipRequest.json"
+
+    $env:CNI_COMMAND="ADD"
+    $env:CNI_CONTAINERID="dummy"
+    $env:CNI_NETNS="dummy"
+    $env:CNI_IFNAME="dummy"
+    $env:CNI_PATH=$hostLocalDir #path to host-local.exe
+
+    If(!(Test-Path "$nodeDir\sourceVip.json")){
+        Get-Content "$nodeDir\sourceVipRequest.json" | &"$hostLocalDir\host-local.exe" | Out-File "$nodeDir\sourceVip.json"
+    }
+    $sourceVipJSON = Get-Content sourceVip.json | ConvertFrom-Json 
+    $sourceVip = $sourceVipJSON.ip4.ip.Split("/")[0]
+    $sourceVip
+
+    Remove-Item env:CNI_COMMAND
+    Remove-Item env:CNI_CONTAINERID
+    Remove-Item env:CNI_NETNS
+    Remove-Item env:CNI_IFNAME
+    Remove-Item env:CNI_PATH
+}
+
+
+function Reset-HNSNetwork()
+{
+    Get-HNSEndpoint | Remove-HNSEndpoint
+    Get-HNSNetwork | ? Name -Like "cbr0" | Remove-HNSNetwork
+    Get-HNSNetwork | ? Name -Like "vxlan0" | Remove-HNSNetwork
+    Get-HnsPolicyList | Remove-HnsPolicyList
+}
+
+
+
+#########################################################################
+Export-ModuleMember -Function Reset-HNSNetwork
+Export-ModuleMember -Function Get-HNSSourceVip
 Export-ModuleMember -Function Get-HNSActivities
 Export-ModuleMember -Function Get-HnsSwitchExtensions
 Export-ModuleMember -Function Set-HnsSwitchExtension
@@ -527,21 +576,42 @@ func saveHnsScript(scriptDirectory string) string {
 
 func setupOverlay(scriptDirectory string, interfaceName string) {
 	hnsLocation := saveHnsScript(scriptDirectory)
-	run("ipmo  " + hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30"`+
+	_ = run("ipmo  " + hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30"`+
 		` -Gateway "192.168.255.1" -Name "External" -AdapterName "%s" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; })`,
 		interfaceName),
 	)
 }
 
+
+func setupOverlayVip(scriptDirectory string, hostLocalDir string, networkName string) string{
+	hnsLocation := saveHnsScript(scriptDirectory)
+	return = run("ipmo  " + hnsLocation + fmt.Sprintf(`; Get-HNSSourceVip -nodeDir "%s" -hostLocalDir "%s" -NetworkName "%s"`,
+        scriptDirectory,
+        hostLocalDir,
+        networkName),
+	)
+}
+
+
 func setupL2bridge(scriptDirectory string, interfaceName string) {
 	hnsLocation := saveHnsScript(scriptDirectory)
-	run("ipmo  " + hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type l2bridge -AddressPrefix "192.168.255.0/30"`+
+	_ = run("ipmo  " + hnsLocation + fmt.Sprintf(`; New-HNSNetwork -Type l2bridge -AddressPrefix "192.168.255.0/30"`+
 		` -Gateway "192.168.255.1" -Name "External" -AdapterName "%s"`,
 		interfaceName),
 	)
 }
 
-func run(command string) {
+func resetHnsNetwork(scriptDirectory string) {
+	hnsLocation := saveHnsScript(scriptDirectory)
+	_ = run("ipmo  " + hnsLocation + `; Reset-HNSNetwork`)
+}
+
+func resetHnsNetwork(scriptDirectory string) {
+	hnsLocation := saveHnsScript(scriptDirectory)
+	_ = run("ipmo  " + hnsLocation + `; Reset-HNSNetwork`)
+}
+
+func run(command string) string {
 	logrus.Info(command)
 	cmd := exec.Command("powershell", "-Command", command)
 	cmd.Stdout = os.Stdout
@@ -549,4 +619,8 @@ func run(command string) {
 	if err := cmd.Run(); err != nil {
 		logrus.Fatalf("Error running command: %v", err)
 	}
+
+	var buf bytes.Buffer
+	io.Copy(&buf, cmd.Stdout)
+	return buf.String()
 }

@@ -48,3 +48,10 @@ $response = "";
 $hnsApi = Get-VmComputeNativeMethods
 $hnsApi::HNSCall("GET", "/globals/version", "", [ref] $response);
 $response
+
+#cleanup
+ipmo C:\etc\rancher\node\hns.psm1
+Get-HNSEndpoint | Remove-HNSEndpoint
+Get-HNSNetwork | ? Name -Like "cbr0" | Remove-HNSNetwork
+Get-HNSNetwork | ? Name -Like "vxlan0" | Remove-HNSNetwork
+Get-HnsPolicyList | Remove-HnsPolicyList
