@@ -518,7 +518,7 @@ function Get-HNSSourceVip($nodeDir, $hostLocalDir, $NetworkName)
     If(!(Test-Path "$nodeDir\sourceVip.json")){
         Get-Content "$nodeDir\sourceVipRequest.json" | &"$hostLocalDir\host-local.exe" | Out-File "$nodeDir\sourceVip.json"
     }
-    $sourceVipJSON = Get-Content sourceVip.json | ConvertFrom-Json 
+    $sourceVipJSON = Get-Content $nodeDir\sourceVip.json | ConvertFrom-Json 
     $sourceVip = $sourceVipJSON.ip4.ip.Split("/")[0]
     $sourceVip
 
@@ -582,16 +582,17 @@ func setupOverlay(scriptDirectory string, interfaceName string) {
 	)
 }
 
-
-func setupOverlayVip(scriptDirectory string, hostLocalDir string, networkName string) string{
+func SetupOverlayVip(scriptDirectory string, hostLocalDir string, networkName string) string {
 	hnsLocation := saveHnsScript(scriptDirectory)
-	return = run("ipmo  " + hnsLocation + fmt.Sprintf(`; Get-HNSSourceVip -nodeDir "%s" -hostLocalDir "%s" -NetworkName "%s"`,
-        scriptDirectory,
-        hostLocalDir,
-        networkName),
+	_ = run("ipmo  " + hnsLocation + fmt.Sprintf(`; Get-HNSSourceVip -nodeDir "%s" -hostLocalDir "%s" -NetworkName "%s"`,
+		scriptDirectory,
+		hostLocalDir,
+		networkName),
 	)
-}
 
+	return run(fmt.Sprintf(`$sourceVipJSON = Get-Content %s\sourceVip.json | ConvertFrom-Json ;  $sourceVipJSON.ip4.ip.Split("/")[0]`, scriptDirectory))
+
+}
 
 func setupL2bridge(scriptDirectory string, interfaceName string) {
 	hnsLocation := saveHnsScript(scriptDirectory)
@@ -614,13 +615,15 @@ func resetHnsNetwork(scriptDirectory string) {
 func run(command string) string {
 	logrus.Info(command)
 	cmd := exec.Command("powershell", "-Command", command)
-	cmd.Stdout = os.Stdout
+	r, w, _ := os.Pipe()
+	cmd.Stdout = w
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		logrus.Fatalf("Error running command: %v", err)
 	}
 
+	w.Close()
 	var buf bytes.Buffer
-	io.Copy(&buf, cmd.Stdout)
+	io.Copy(&buf, r)
 	return buf.String()
 }

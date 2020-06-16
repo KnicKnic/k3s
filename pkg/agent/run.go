@@ -55,9 +55,6 @@ func run(ctx context.Context, cfg cmds.Agent, proxy proxy.Proxy) error {
 		return err
 	}
 
-	// *note if we are windows we need to setup flannel before starting kube-proxy
-	// kube-proxy setup is in agent code
-
 	if err := agent.Agent(&nodeConfig.AgentConfig); err != nil {
 		return err
 	}

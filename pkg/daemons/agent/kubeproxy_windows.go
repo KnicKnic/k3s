@@ -3,9 +3,12 @@ package agent
 import (
 	// "path/filepath"
 	"os"
+	"strings"
 	// "github.com/rancher/k3s/pkg/agent/util"
 	"github.com/rancher/k3s/pkg/daemons/config"
 	"github.com/rancher/k3s/pkg/daemons/executor"
+
+	"github.com/rancher/k3s/pkg/agent/flannel"
 	"github.com/sirupsen/logrus"
 
 	_ "k8s.io/component-base/metrics/prometheus/restclient" // for client metric registration
@@ -50,7 +53,7 @@ func startKubeProxy(cfg *config.Agent) error {
 	if kubeNetwork == "" || kubeNetwork == "vxlan0" {
 		argsMap["network-name"] = "vxlan0"
 		argsMap["feature-gates"] = "WinOverlay=true"
-		// argsMap["source-vip"] = "10.42.0.8"
+		argsMap["source-vip"] = strings.TrimSpace(flannel.SetupOverlayVip("c:\\etc\\rancher\\node", "C:\\Users\\Administrator\\go\\src\\github.com\\rancher\\k3s", argsMap["network-name"]))
 	}
 
 	// if cfg.
