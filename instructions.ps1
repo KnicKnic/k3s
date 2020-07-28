@@ -7,11 +7,16 @@ nameserver 8.8.8.8
 """ > /etc/resolv.conf
 
 #add paths, #note k3s is where my host-local files are
-$env:KUBECONFIG="C:\tmp\k3s\server\cred\admin.kubeconfig"
+# $env:KUBECONFIG="C:\tmp\k3s\server\cred\admin.kubeconfig"
+$env:KUBECONFIG="C:\Users\Administrator\.kube\k3s.yaml"
 $env:Path +=";C:\Users\Administrator\go\src\github.com\rancher\k3s"
 $env:Path +=";C:\tmp"
 
 #optional resolve-conf --resolv-conf C:\etc\resolv.conf 
+
+$hostNetwork = get-NetIPAddress -InterfaceAlias "vEthernet (Ethernet)"| ?{$_.AddressFamily -eq "IPv4"}
+$env:hostIp = $hostNetwork.IpAddress
+$env:hostCidr = "{0}/{1}" -f $hostNetwork.IpAddress, $hostNetwork.PrefixLength
 
 #for host-gw
 #eventually need to get rid of KUBE_NETWORK
@@ -54,4 +59,5 @@ ipmo C:\etc\rancher\node\hns.psm1
 Get-HNSEndpoint | Remove-HNSEndpoint
 Get-HNSNetwork | ? Name -Like "cbr0" | Remove-HNSNetwork
 Get-HNSNetwork | ? Name -Like "vxlan0" | Remove-HNSNetwork
+# Get-HnsNetwork |?{$_.name -eq "External"} |Remove-HnsNetwork
 Get-HnsPolicyList | Remove-HnsPolicyList

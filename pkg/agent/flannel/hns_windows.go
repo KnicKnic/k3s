@@ -607,11 +607,6 @@ func resetHnsNetwork(scriptDirectory string) {
 	_ = run("ipmo  " + hnsLocation + `; Reset-HNSNetwork`)
 }
 
-func resetHnsNetwork(scriptDirectory string) {
-	hnsLocation := saveHnsScript(scriptDirectory)
-	_ = run("ipmo  " + hnsLocation + `; Reset-HNSNetwork`)
-}
-
 func run(command string) string {
 	logrus.Info(command)
 	cmd := exec.Command("powershell", "-Command", command)

@@ -3,6 +3,7 @@ package flannel
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -171,10 +172,33 @@ func createCNIConf(nodeConfig *config.Node) error {
 		return fmt.Errorf("Cannot configure unknown flannel backend '%s'", nodeConfig.FlannelBackend)
 	}
 	confJSON := strings.Replace(cniConf, "%CLUSTERCIDR%", nodeConfig.AgentConfig.ClusterCIDR.String(), -1)
+
+	// ideally I should not be lazy and query hostCidr & ip
+	// flannelIface := "Ethernet"
+	// if nodeConfig.FlannelIface != nil {
+	// 	if nodeConfig.FlannelIface.Name != "" {
+	// 		flannelIface = nodeConfig.FlannelIface.Name
+	// 	}
+	// }
+	// hostCidr := getHostCidr(nodeConfig.AgentConfig.NodeConfigPath, flannelIface)
+	// hostIp := getHostIp(nodeConfig.AgentConfig.NodeConfigPath, flannelIface)
+
+	// lets default them to some random computer, and load them with environment variables
+	hostCidr := "10.231.120.177/24"
+	if os.Getenv("hostCidr") != "" {
+		hostCidr = os.Getenv("hostCidr")
+	}
+
+	hostIp := "10.231.120.177"
+	if os.Getenv("hostIp") != "" {
+		hostIp = os.Getenv("hostIp")
+	}
+	// ideally I should write this function, lets be lazy ...
+
 	// TODO: figure out how to fetch service cidr
 	confJSON = strings.Replace(confJSON, "%SERVICECIDR%", "10.43.0.0/16", -1)
-	confJSON = strings.Replace(confJSON, "%HOSTCIDR%", "10.231.120.177/24", -1)
-	confJSON = strings.Replace(confJSON, "%HOSTIPCIDR%", "10.231.120.177/32", -1)
+	confJSON = strings.Replace(confJSON, "%HOSTCIDR%", hostCidr, -1)
+	confJSON = strings.Replace(confJSON, "%HOSTIPCIDR%", hostIp+"/32", -1)
 
 	return util.WriteFile(p, confJSON)
 }
