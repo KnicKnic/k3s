@@ -388,7 +388,8 @@ func get(envInfo *cmds.Agent, proxy proxy.Proxy) (*config.Node, error) {
 	// hack due to kube-proxy needing to query nodes to get node ip
 	// C:\Users\Administrator\go\src\github.com\rancher\k3s\vendor\k8s.io\kubernetes\cmd\kube-proxy\app\server_windows.go
 	// line 112
-	kubeconfigKubeproxy = "C:\\tmp\\k3s\\server\\cred\\admin.kubeconfig"
+	// kubeconfigKubeproxy = "C:\\tmp\\k3s\\server\\cred\\admin.kubeconfig"
+	kubeconfigKubeproxy = filepath.Join(envInfo.DataDir, "..\\server\\cred\\admin.kubeconfig")
 
 	clientK3sControllerCert := filepath.Join(envInfo.DataDir, "client-k3s-controller.crt")
 	clientK3sControllerKey := filepath.Join(envInfo.DataDir, "client-k3s-controller.key")
