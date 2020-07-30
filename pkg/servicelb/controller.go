@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	image              = "rancher/klipper-lb:v0.1.2"
+	image              = "sachinnagar/windows-k3s-lb:v1.0"
 	svcNameLabel       = "svccontroller.k3s.cattle.io/svcname"
 	daemonsetNodeLabel = "svccontroller.k3s.cattle.io/enablelb"
 	nodeSelectorLabel  = "svccontroller.k3s.cattle.io/nodeselector"
@@ -269,6 +269,7 @@ func (h *handler) newDaemonSet(svc *core.Service) (*apps.DaemonSet, error) {
 	name := fmt.Sprintf("svclb-%s", svc.Name)
 	oneInt := intstr.FromInt(1)
 
+	pathType := core.HostPathDirectoryOrCreate
 	ds := &apps.DaemonSet{
 		ObjectMeta: meta.ObjectMeta{
 			Name:      name,
@@ -303,6 +304,27 @@ func (h *handler) newDaemonSet(svc *core.Service) (*apps.DaemonSet, error) {
 						svcNameLabel: svc.Name,
 					},
 				},
+				Spec: core.PodSpec{
+					Volumes: []core.Volume{
+						{
+							Name: "wins-pipe",
+							VolumeSource: core.VolumeSource{
+								HostPath: &core.HostPathVolumeSource{
+									Path: "\\\\.\\pipe\\rancher_wins",
+								},
+							},
+						},
+						{
+							Name: "lb-script-host-path",
+							VolumeSource: core.VolumeSource{
+								HostPath: &core.HostPathVolumeSource{
+									Path: "c:/etc/lb",
+									Type: &pathType,
+								},
+							},
+						},
+					},
+				},
 			},
 			UpdateStrategy: apps.DaemonSetUpdateStrategy{
 				Type: apps.RollingUpdateDaemonSetStrategyType,
@@ -318,15 +340,8 @@ func (h *handler) newDaemonSet(svc *core.Service) (*apps.DaemonSet, error) {
 		container := core.Container{
 			Name:            portName,
 			Image:           image,
-			ImagePullPolicy: core.PullIfNotPresent,
-			Ports: []core.ContainerPort{
-				{
-					Name:          portName,
-					ContainerPort: port.Port,
-					HostPort:      port.Port,
-					Protocol:      port.Protocol,
-				},
-			},
+			ImagePullPolicy: core.PullAlways,
+
 			Env: []core.EnvVar{
 				{
 					Name:  "SRC_PORT",
@@ -338,18 +353,21 @@ func (h *handler) newDaemonSet(svc *core.Service) (*apps.DaemonSet, error) {
 				},
 				{
 					Name:  "DEST_PORT",
-					Value: strconv.Itoa(int(port.Port)),
+					Value: strconv.Itoa(int(port.TargetPort.IntValue())),
 				},
 				{
 					Name:  "DEST_IP",
 					Value: svc.Spec.ClusterIP,
 				},
 			},
-			SecurityContext: &core.SecurityContext{
-				Capabilities: &core.Capabilities{
-					Add: []core.Capability{
-						"NET_ADMIN",
-					},
+			VolumeMounts: []core.VolumeMount{
+				{
+					Name:      "wins-pipe",
+					MountPath: "\\\\.\\pipe\\rancher_wins",
+				},
+				{
+					Name:      "lb-script-host-path",
+					MountPath: "c:/host/etc/lb",
 				},
 			},
 		}
